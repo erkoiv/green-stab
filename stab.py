@@ -162,7 +162,7 @@ class Stabilizer:
             # Display original and stabilized video streams side by side
             out = np.hstack((frame, frame_stabilized))
             cv.imshow('Unstabilised {} and {} Stabilized'.format(
-                " "*40, " "*40), out)
+                " "*60, " "*60), out)
 
             # Wait for key press to exit
             if cv.waitKey(1) == ord('q'):
