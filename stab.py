@@ -3,13 +3,19 @@ import cv2 as cv
 
 
 class Stabilizer:
-    def __init__(self, video_in):
+    def __init__(self, video_in, save=False):
         self.input = self.connectVideo(video_in)
+        self.fps = self.input.get(cv.CAP_PROP_FPS)
         self.transforms = []
         self.prev_center = None
+        self.save = save
 
     def connectVideo(self, video_in):
         return cv.VideoCapture(video_in)
+
+    def startSave(self, video_out, size):
+        return cv.VideoWriter(
+            video_out, cv.VideoWriter_fourcc(*'mp4v'), self.fps, size)
 
     def getFace(self, frame):
         face_cascade = cv.CascadeClassifier(
@@ -98,6 +104,11 @@ class Stabilizer:
                 break
 
             if first_frame:
+                if self.save:
+                    width = int(self.input.get(cv.CAP_PROP_FRAME_WIDTH))
+                    height = int(self.input.get(cv.CAP_PROP_FRAME_HEIGHT))
+                    self.output = self.startSave('walkingStab.mp4',
+                                                 (width*2, height))
                 prev_frame = frame.copy()
                 prev_points = self.getFeatures(prev_frame)
                 first_frame = False
@@ -161,6 +172,7 @@ class Stabilizer:
 
             # Display original and stabilized video streams side by side
             out = np.hstack((frame, frame_stabilized))
+            self.output.write(out)
             cv.imshow('Unstabilised {} and {} Stabilized'.format(
                 " "*60, " "*60), out)
 
@@ -170,10 +182,11 @@ class Stabilizer:
 
         # Release resources and destroy windows
         self.input.release()
+        self.output.release()
         cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
     video_in = 'walkingCropNonStab.mp4'
-    stabilizer = Stabilizer(video_in)
+    stabilizer = Stabilizer(video_in, save=False)
     stabilizer.stabilize()
